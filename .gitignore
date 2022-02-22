@@ -1,0 +1,15 @@
+# IDEA
+
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# gradle
+
+.gradle
+**/build/
+!src/**/build/
+gradle-app.setting
+!gradle-wrapper.jar
+.gradletasknamecache
