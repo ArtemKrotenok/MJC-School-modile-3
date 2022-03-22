@@ -4,10 +4,12 @@ import com.epam.esm.repository.OrderRepository;
 import com.epam.esm.repository.model.Order;
 import jakarta.persistence.Query;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+@Slf4j
 @Repository
 @AllArgsConstructor
 public class OrderRepositoryImpl extends GenericRepositoryImpl<Long, Order>
@@ -50,8 +52,6 @@ public class OrderRepositoryImpl extends GenericRepositoryImpl<Long, Order>
                 + " WHERE s.user.id=:id";
         Query query = entityManager.createQuery(hql);
         query.setParameter("id", id);
-        query.setFirstResult(start);
-        query.setMaxResults(size);
         return (long) query.getSingleResult();
     }
 

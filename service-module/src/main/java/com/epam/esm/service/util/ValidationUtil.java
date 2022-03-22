@@ -1,9 +1,9 @@
 package com.epam.esm.service.util;
 
 import com.epam.esm.service.exception.CertificateServiceException;
-import com.epam.esm.service.model.OrderCreateDTO;
-import com.epam.esm.service.model.ResponseCode;
-import com.epam.esm.service.model.TagDTO;
+import com.epam.esm.service.model.*;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 
 public class ValidationUtil {
 
@@ -39,7 +39,7 @@ public class ValidationUtil {
 
     public static void validationCreateDTO(TagDTO dto) {
         String errorMessage = null;
-        if (dto.getName() == null || dto.getName().equals("")) {
+        if (StringUtils.isBlank(dto.getName())) {
             errorMessage = "tag name can't be empty";
         }
         if (dto.getId() != null) {
@@ -56,12 +56,67 @@ public class ValidationUtil {
         if (dto.getUserId() == null) {
             errorMessage = "user id can't be empty";
         }
+        if (dto.getSoldCertificates().isEmpty()) {
+            errorMessage = "sold certificates list can't be empty";
+        }
+        dto.getSoldCertificates().forEach(ValidationUtil::validationCreateDTO);
+        if (errorMessage != null) {
+            throw new CertificateServiceException(ResponseDTOUtil.getErrorResponseDTO(
+                    ResponseCode.NOT_VALID_INPUT_DATA, errorMessage));
+        }
+    }
+
+    public static void validationCreateDTO(SoldCertificateCreateDTO dto) {
+        String errorMessage = null;
         if (dto.getCertificateId() == null) {
-            errorMessage = "certificateId id should be null";
+            errorMessage = "certificate id can't be empty";
+        }
+        if (dto.getCount() == null) {
+            errorMessage = "count sold certificate can't be empty";
+        }
+        if (dto.getDiscount() == null) {
+            errorMessage = "discount sold certificate can't be empty";
+        }
+        if (!isPositiveNumber(dto.getDiscount())) {
+            errorMessage = "discount sold certificate is not valid";
         }
         if (errorMessage != null) {
             throw new CertificateServiceException(ResponseDTOUtil.getErrorResponseDTO(
                     ResponseCode.NOT_VALID_INPUT_DATA, errorMessage));
         }
     }
+
+    public static void validation(CertificateDTO certificateDTO) {
+        String errorMessage = null;
+        if (StringUtils.isBlank(certificateDTO.getName())) {
+            errorMessage = "certificate name can't be empty";
+        }
+        if (StringUtils.isBlank(certificateDTO.getDescription())) {
+            errorMessage = "certificate description can't be empty";
+        }
+        if (certificateDTO.getTags() == null || certificateDTO.getTags().isEmpty()) {
+            errorMessage = "certificate tag list can't be empty";
+        }
+        if (!isPositiveNumber(certificateDTO.getPrice())) {
+            errorMessage = "certificate price in not valid";
+        }
+        if (certificateDTO.getDuration() == null || certificateDTO.getDuration() <= 0) {
+            errorMessage = "certificate duration should be > 0";
+        }
+        if (certificateDTO.getTags() == null || certificateDTO.getTags().isEmpty()) {
+            errorMessage = "certificate tag list can't be empty";
+        }
+        if (errorMessage != null) {
+            throw new CertificateServiceException(ResponseDTOUtil.getErrorResponseDTO(
+                    ResponseCode.NOT_VALID_INPUT_DATA, errorMessage));
+        }
+    }
+
+    private static boolean isPositiveNumber(String str) {
+        if (str == null) {
+            return false;
+        }
+        return NumberUtils.toDouble(str) >= 0;
+    }
+
 }

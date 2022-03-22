@@ -1,27 +1,25 @@
 package com.epam.esm.service.util;
 
-import com.epam.esm.repository.CertificateRepository;
-import com.epam.esm.repository.UserRepository;
-import com.epam.esm.repository.model.Certificate;
 import com.epam.esm.repository.model.Order;
-import com.epam.esm.repository.model.User;
-import com.epam.esm.service.exception.CertificateServiceException;
+import com.epam.esm.repository.model.SoldCertificate;
 import com.epam.esm.service.model.OrderCreateDTO;
 import com.epam.esm.service.model.OrderDTO;
-import com.epam.esm.service.model.ResponseCode;
+import com.epam.esm.service.model.SoldCertificateCreateDTO;
 import lombok.AllArgsConstructor;
-import org.springframework.http.HttpStatus;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
+@Slf4j
 @Component
 @AllArgsConstructor
 public class OrderUtil {
 
-    private CertificateUtil certificateUtil;
-    private CertificateRepository certificateRepository;
-    private UserRepository userRepository;
+    private SoldCertificateUtil soldCertificateUtil;
     private UserUtil userUtil;
 
     public OrderDTO convert(Order order) {
@@ -30,7 +28,9 @@ public class OrderUtil {
         }
         return OrderDTO.builder()
                 .id(order.getId())
-                .certificate(certificateUtil.convert(order.getCertificate()))
+                .soldCertificates(order.getSoldCertificates().stream()
+                        .map(soldCertificateUtil::convert)
+                        .collect(Collectors.toList()))
                 .user(userUtil.convert(order.getUser()))
                 .orderDate(DateUtil.convert(order.getOrderDate()))
                 .orderPrice(order.getOrderPrice().toString())
@@ -38,29 +38,19 @@ public class OrderUtil {
     }
 
     public Order convert(OrderCreateDTO dto) {
-        Certificate certificateDB = certificateRepository.findById(dto.getCertificateId());
-        if (certificateDB == null) {
-            throw new CertificateServiceException(ResponseDTOUtil.getErrorResponseDTO(
-                    ResponseCode.NOT_FOUND, "certificate for id=" + dto.getCertificateId()), HttpStatus.NOT_FOUND);
-        }
-        User userDB = userRepository.findById(dto.getUserId());
-        if (userDB == null) {
-            throw new CertificateServiceException(ResponseDTOUtil.getErrorResponseDTO(
-                    ResponseCode.NOT_FOUND, "user for id=" + dto.getUserId()), HttpStatus.NOT_FOUND);
-        }
-        Order order = new Order();
-        order.setUser(userDB);
-        order.setCertificate(certificateDB);
-        if (dto.getOrderPrice() == null || dto.getOrderPrice().equals("")) {
-            order.setOrderPrice(certificateDB.getPrice());
-        } else {
-            order.setOrderPrice(new BigDecimal(dto.getOrderPrice()));
-        }
-        if (dto.getOrderDate() == null || dto.getOrderDate().equals("")) {
-            order.setOrderDate(DateUtil.getNow());
-        } else {
-            order.setOrderDate(DateUtil.convert(dto.getOrderDate()));
-        }
-        return order;
+        Set<SoldCertificate> soldCertificates = createSoldCertificates(dto.getSoldCertificates());
+        return Order.builder()
+                .user(userUtil.getDbUser(dto.getUserId()))
+                .soldCertificates(soldCertificates)
+                .orderDate(DateUtil.getNow())
+                .orderPrice(soldCertificates.stream()
+                        .map(SoldCertificate::getSoldPrice)
+                        .reduce(BigDecimal::add)
+                        .orElse(BigDecimal.ZERO))
+                .build();
+    }
+
+    private Set<SoldCertificate> createSoldCertificates(List<SoldCertificateCreateDTO> soldCertificates) {
+        return soldCertificates.stream().map(soldCertificateUtil::convert).collect(Collectors.toSet());
     }
 }

@@ -1,14 +1,13 @@
 package com.epam.esm.service.model;
 
-import lombok.*;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.springframework.hateoas.RepresentationModel;
 
-@Getter
-@Setter
+@Data
 @Builder
-@ToString
-@AllArgsConstructor
-@NoArgsConstructor
+@EqualsAndHashCode(callSuper = true)
 public class UserDTO extends RepresentationModel<UserDTO> {
 
     private Long id;

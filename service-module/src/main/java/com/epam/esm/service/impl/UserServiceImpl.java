@@ -1,4 +1,4 @@
-package com.epam.esm.service.imp;
+package com.epam.esm.service.impl;
 
 import com.epam.esm.repository.UserRepository;
 import com.epam.esm.repository.model.User;
@@ -6,11 +6,11 @@ import com.epam.esm.service.UserService;
 import com.epam.esm.service.exception.CertificateServiceException;
 import com.epam.esm.service.model.ResponseCode;
 import com.epam.esm.service.model.UserDTO;
-import com.epam.esm.service.util.OrderUtil;
 import com.epam.esm.service.util.ResponseDTOUtil;
 import com.epam.esm.service.util.UserUtil;
 import com.epam.esm.service.util.ValidationUtil;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,13 +20,13 @@ import java.util.stream.Collectors;
 
 import static com.epam.esm.service.util.PaginationUtil.getStartPosition;
 
+@Slf4j
 @Service
 @AllArgsConstructor
 public class UserServiceImpl implements UserService {
 
     private UserRepository userRepository;
     private UserUtil userUtil;
-    private OrderUtil orderUtil;
 
     @Override
     @Transactional
@@ -34,10 +34,13 @@ public class UserServiceImpl implements UserService {
         ValidationUtil.validationId(id);
         User user = userRepository.findById(id);
         if (user != null) {
+            log.info("user id= " + user.getId() + " find successfully");
             return userUtil.convert(user);
         }
+        String errorMessage = ResponseCode.NOT_FOUND.getMessage() + " (for id = " + id + ")";
+        log.error(errorMessage);
         throw new CertificateServiceException(ResponseDTOUtil.getErrorResponseDTO(
-                ResponseCode.NOT_FOUND, "for id=" + id), HttpStatus.NOT_FOUND);
+                ResponseCode.NOT_FOUND, errorMessage), HttpStatus.NOT_FOUND);
     }
 
     @Override
@@ -45,6 +48,7 @@ public class UserServiceImpl implements UserService {
     public List<UserDTO> getAllByPageSorted(int page, int size) {
         ValidationUtil.validationPageSize(page, size);
         List<User> users = userRepository.getAllByPageSorted(getStartPosition(page, size), size);
+        log.info(users.size() + " users find successfully");
         return convertResults(users);
     }
 

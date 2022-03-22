@@ -12,7 +12,9 @@ public interface CertificateService {
 
     CertificateDTO findById(Long id);
 
-    void update(CertificateDTO certificateDTO);
+    CertificateDTO update(Long id, CertificateDTO certificateDTO);
+
+    CertificateDTO updateFull(Long id, CertificateDTO certificateDTO);
 
     List<CertificateDTO> search(Integer page, Integer size, String tag, String name, String description);
 

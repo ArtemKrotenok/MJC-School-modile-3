@@ -1,4 +1,4 @@
-package com.epam.esm.service.imp;
+package com.epam.esm.service.impl;
 
 import com.epam.esm.repository.OrderRepository;
 import com.epam.esm.repository.model.Order;
@@ -11,6 +11,7 @@ import com.epam.esm.service.util.OrderUtil;
 import com.epam.esm.service.util.ResponseDTOUtil;
 import com.epam.esm.service.util.ValidationUtil;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +21,7 @@ import java.util.stream.Collectors;
 
 import static com.epam.esm.service.util.PaginationUtil.getStartPosition;
 
+@Slf4j
 @Service
 @AllArgsConstructor
 public class OrderServiceImpl implements OrderService {
@@ -33,10 +35,14 @@ public class OrderServiceImpl implements OrderService {
         ValidationUtil.validationId(id);
         Order order = orderRepository.findById(id);
         if (order != null) {
+            log.info("order id= " + order.getId() + " find successfully");
             return orderUtil.convert(order);
         }
+        String errorMessage = ResponseCode.NOT_FOUND.getMessage() + " (for id = " + id + ")";
+        log.error(errorMessage);
         throw new CertificateServiceException(ResponseDTOUtil.getErrorResponseDTO(
-                ResponseCode.NOT_FOUND, "for id=" + id), HttpStatus.NOT_FOUND);
+                ResponseCode.NOT_FOUND, errorMessage),
+                HttpStatus.NOT_FOUND);
     }
 
     @Override
@@ -44,6 +50,7 @@ public class OrderServiceImpl implements OrderService {
     public List<OrderDTO> getAllByPageSorted(int page, int size) {
         ValidationUtil.validationPageSize(page, size);
         List<Order> orders = orderRepository.getAllByPageSorted(getStartPosition(page, size), size);
+        log.info(orders.size() + " orders find successfully");
         return convertResults(orders);
     }
 
@@ -59,6 +66,7 @@ public class OrderServiceImpl implements OrderService {
         ValidationUtil.validationCreateDTO(orderCreateDTO);
         Order newOrder = orderUtil.convert(orderCreateDTO);
         orderRepository.add(newOrder);
+        log.info("order id = " + newOrder.getId() + " create successfully");
         return orderUtil.convert(newOrder);
     }
 
@@ -68,6 +76,7 @@ public class OrderServiceImpl implements OrderService {
         ValidationUtil.validationPageSize(page, size);
         ValidationUtil.validationId(id);
         List<Order> orders = orderRepository.getAllOrdersForUserIdByPageSorted(getStartPosition(page, size), size, id);
+        log.info(orders.size() + " orders for user find successfully");
         return orders.stream().map(orderUtil::convert).collect(Collectors.toList());
     }
 

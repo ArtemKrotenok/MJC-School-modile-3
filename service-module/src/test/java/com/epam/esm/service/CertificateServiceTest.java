@@ -4,7 +4,7 @@ import com.epam.esm.repository.CertificateRepository;
 import com.epam.esm.repository.TagRepository;
 import com.epam.esm.repository.model.Certificate;
 import com.epam.esm.service.exception.CertificateServiceException;
-import com.epam.esm.service.imp.CertificateServiceImpl;
+import com.epam.esm.service.impl.CertificateServiceImpl;
 import com.epam.esm.service.model.CertificateDTO;
 import com.epam.esm.service.model.ResponseCode;
 import com.epam.esm.service.util.CertificateUtil;
@@ -33,7 +33,7 @@ class CertificateServiceTest {
     @BeforeEach
     public void setup() {
         TagUtil tagUtil = new TagUtil(tagRepository);
-        CertificateUtil certificateUtil = new CertificateUtil(tagUtil);
+        CertificateUtil certificateUtil = new CertificateUtil(tagUtil, certificateRepository);
         this.certificateService = new CertificateServiceImpl(certificateRepository, certificateUtil, tagUtil);
     }
 
@@ -92,6 +92,6 @@ class CertificateServiceTest {
         Certificate validCertificate = TestServiceDataUtil.getValidCertificate();
         CertificateDTO validCertificateDTO = TestServiceDataUtil.getValidCertificateDTO();
         when(certificateRepository.findById(validCertificate.getId())).thenReturn(validCertificate);
-        certificateService.update(validCertificateDTO);
+        certificateService.update(validCertificateDTO.getId(), validCertificateDTO);
     }
 }

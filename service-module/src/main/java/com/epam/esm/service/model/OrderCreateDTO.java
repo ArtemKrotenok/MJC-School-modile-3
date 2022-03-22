@@ -1,17 +1,13 @@
 package com.epam.esm.service.model;
 
-import lombok.*;
+import lombok.Data;
 
-@Getter
-@Setter
-@Builder
-@ToString
-@AllArgsConstructor
-@NoArgsConstructor
+import java.util.List;
+
+@Data
 public class OrderCreateDTO {
 
     private Long userId;
-    private Long certificateId;
-    private String orderDate;
-    private String orderPrice;
+    private List<SoldCertificateCreateDTO> soldCertificates;
+
 }

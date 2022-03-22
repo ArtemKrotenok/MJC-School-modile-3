@@ -2,10 +2,15 @@ package com.epam.esm.service.util;
 
 import com.epam.esm.repository.UserRepository;
 import com.epam.esm.repository.model.User;
+import com.epam.esm.service.exception.CertificateServiceException;
+import com.epam.esm.service.model.ResponseCode;
 import com.epam.esm.service.model.UserDTO;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 @AllArgsConstructor
 public class UserUtil {
@@ -40,4 +45,17 @@ public class UserUtil {
         user.setSurname(userDTO.getSurname());
         return user;
     }
+
+    public User getDbUser(Long id) {
+        User userDB = userRepository.findById(id);
+        if (userDB == null) {
+            String errorMessage = ResponseCode.NOT_FOUND.getMessage() + " (user for id = " + id + ")";
+            log.error(errorMessage);
+            throw new CertificateServiceException(ResponseDTOUtil.getErrorResponseDTO(
+                    ResponseCode.NOT_FOUND, errorMessage),
+                    HttpStatus.NOT_FOUND);
+        }
+        return userDB;
+    }
+
 }

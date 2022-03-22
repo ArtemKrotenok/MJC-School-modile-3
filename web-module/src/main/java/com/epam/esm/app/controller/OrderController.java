@@ -40,13 +40,27 @@ public class OrderController {
      * @return created OrderDTO
      */
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity<Object> createTag(@RequestBody OrderCreateDTO orderCreateDTO) {
+    public ResponseEntity<Object> createOrder(@RequestBody OrderCreateDTO orderCreateDTO) {
         OrderDTO newOrderDTO = orderService.create(orderCreateDTO);
         LinkUtil.addLinksInfo(newOrderDTO);
         return ResponseEntity
-                .status(HttpStatus.OK)
+                .status(HttpStatus.CREATED)
                 .body(newOrderDTO);
+    }
+
+    /**
+     * controller for getting Order by id
+     *
+     * @param id - id number Order in database
+     * @return OrderDTO
+     */
+    @GetMapping(value = "/{id}")
+    public ResponseEntity<Object> getOrderById(@PathVariable(name = "id") Long id) {
+        OrderDTO orderDTO = orderService.findById(id);
+        LinkUtil.addLinksInfo(orderDTO);
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(orderDTO);
     }
 
     /**
@@ -75,20 +89,5 @@ public class OrderController {
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(response);
-    }
-
-    /**
-     * controller for getting Order by id
-     *
-     * @param id - id number Order in database
-     * @return OrderDTO
-     */
-    @GetMapping(value = "/{id}")
-    public ResponseEntity<Object> getOrderById(@PathVariable(name = "id") Long id) {
-        OrderDTO orderDTO = orderService.findById(id);
-        LinkUtil.addLinksInfo(orderDTO);
-        return ResponseEntity
-                .status(HttpStatus.OK)
-                .body(orderDTO);
     }
 }

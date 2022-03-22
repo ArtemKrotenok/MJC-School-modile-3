@@ -26,12 +26,19 @@ public class TagUtil {
         if (tagDTO == null) {
             return null;
         }
+        Tag tagDB = null;
         if (tagDTO.getId() != null) {
-            Tag tagDB = tagRepository.findById(tagDTO.getId());
+            tagDB = tagRepository.findById(tagDTO.getId());
             if (tagDB != null) {
                 return tagDB;
             }
         }
+
+        tagDB = tagRepository.findByName(tagDTO.getName());
+        if (tagDB != null) {
+            return tagDB;
+        }
+
         Tag tag = new Tag();
         tag.setName(tagDTO.getName());
         return tag;

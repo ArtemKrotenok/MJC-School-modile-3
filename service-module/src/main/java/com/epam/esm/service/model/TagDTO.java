@@ -1,15 +1,13 @@
 package com.epam.esm.service.model;
 
-import lombok.*;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.springframework.hateoas.RepresentationModel;
 
-@Getter
-@Setter
+@Data
 @Builder
-@ToString
-@EqualsAndHashCode(callSuper = false)
-@AllArgsConstructor
-@NoArgsConstructor
+@EqualsAndHashCode(callSuper = true)
 public class TagDTO extends RepresentationModel<TagDTO> {
 
     private Long id;

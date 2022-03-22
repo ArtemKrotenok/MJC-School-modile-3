@@ -1,5 +1,6 @@
 package com.epam.esm.service;
 
+import com.epam.esm.repository.CertificateRepository;
 import com.epam.esm.repository.TagRepository;
 import com.epam.esm.repository.model.Certificate;
 import com.epam.esm.service.model.CertificateDTO;
@@ -21,11 +22,13 @@ class CertificateUtilTest {
     private CertificateUtil certificateUtil;
     @Mock
     private TagRepository tagRepository;
+    @Mock
+    private CertificateRepository certificateRepository;
 
     @BeforeEach
     public void setup() {
         TagUtil tagUtil = new TagUtil(tagRepository);
-        this.certificateUtil = new CertificateUtil(tagUtil);
+        this.certificateUtil = new CertificateUtil(tagUtil, certificateRepository);
     }
 
     @Test

@@ -10,3 +10,4 @@ target/
 # app
 logs
 /web-module/HELP.md
+/web-module/src/main/resources/application-local.properties

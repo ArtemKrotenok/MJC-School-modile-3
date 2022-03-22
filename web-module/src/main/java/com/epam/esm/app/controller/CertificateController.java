@@ -2,6 +2,7 @@ package com.epam.esm.app.controller;
 
 import com.epam.esm.app.model.Page;
 import com.epam.esm.app.model.PageModel;
+import com.epam.esm.app.util.LinkUtil;
 import com.epam.esm.app.util.PageUtil;
 import com.epam.esm.service.CertificateService;
 import com.epam.esm.service.model.CertificateDTO;
@@ -29,8 +30,6 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 public class CertificateController {
 
-    public static final int DEFAULT_PAGE_SIZE = 10;
-    public static final int DEFAULT_FIRST_PAGE = 1;
     public CertificateService certificateService;
 
     /**
@@ -42,21 +41,40 @@ public class CertificateController {
     @PostMapping
     public ResponseEntity<Object> createCertificate(@RequestBody CertificateDTO certificateDTO) {
         CertificateDTO newCertificateDTO = certificateService.create(certificateDTO);
-        newCertificateDTO.add(linkTo(methodOn(CertificateController.class).getCertificateById(newCertificateDTO.getId())).withSelfRel());
+        LinkUtil.addLinksInfo(newCertificateDTO);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(newCertificateDTO);
     }
 
     /**
-     * controller for update gift certificate
+     * controller for update all fields gift certificate
      *
-     * @param certificateDTO - object contain update data for gift certificate model
+     * @param updateDTO - object contain update data for gift certificate model
      */
-    @PutMapping
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void updateCertificate(@RequestBody CertificateDTO certificateDTO) {
-        certificateService.update(certificateDTO);
+    @PutMapping(value = "/{id}")
+    public ResponseEntity<CertificateDTO> updateFullCertificate(
+            @PathVariable(name = "id") Long id,
+            @RequestBody CertificateDTO updateDTO) {
+        CertificateDTO resultDTO = certificateService.updateFull(id, updateDTO);
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(resultDTO);
+    }
+
+    /**
+     * controller for update listed fields gift certificate
+     *
+     * @param updateDTO - object contain update data for gift certificate model
+     */
+    @PatchMapping(value = "/{id}")
+    public ResponseEntity<Object> updateCertificate(
+            @PathVariable(name = "id") Long id,
+            @RequestBody CertificateDTO updateDTO) {
+        CertificateDTO resultDTO = certificateService.update(id, updateDTO);
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(resultDTO);
     }
 
     /**
@@ -79,7 +97,7 @@ public class CertificateController {
             @RequestParam(name = "description") String description
     ) {
         List<CertificateDTO> certificateDTOs = certificateService.search(page, size, tag, name, description);
-        certificateDTOs.forEach(this::addLinksInfo);
+        certificateDTOs.forEach(LinkUtil::addLinksInfo);
         PageModel<List<CertificateDTO>> response = new PageModel<>(certificateDTOs);
         long countCertificates = certificateService.getCountSearch(tag, name, description);
         Page pageInfo = PageUtil.getPageInfo(page, size, countCertificates);
@@ -104,7 +122,7 @@ public class CertificateController {
     @GetMapping(value = "/{id}")
     public ResponseEntity<Object> getCertificateById(@PathVariable(name = "id") Long id) {
         CertificateDTO certificateDTO = certificateService.findById(id);
-        addLinksInfo(certificateDTO);
+        LinkUtil.addLinksInfo(certificateDTO);
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(certificateDTO);
@@ -116,14 +134,10 @@ public class CertificateController {
      * @param id - id number gift certificate in database
      */
     @DeleteMapping(value = "/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteCertificateById(@PathVariable(name = "id") long id) {
+    public ResponseEntity<Object> deleteCertificateById(@PathVariable(name = "id") long id) {
         certificateService.deleteById(id);
-    }
-
-    private void addLinksInfo(CertificateDTO certificateDTO) {
-        certificateDTO.add(linkTo(methodOn(CertificateController.class).getCertificateById(certificateDTO.getId())).withSelfRel());
-        certificateDTO.getTags().forEach(tagDTO ->
-                tagDTO.add(linkTo(methodOn(CertificateController.class).searchCertificates(DEFAULT_FIRST_PAGE, DEFAULT_PAGE_SIZE, tagDTO.getName(), "", "")).withRel("searchByTagName")));
+        return ResponseEntity
+                .status(HttpStatus.NO_CONTENT)
+                .body(null);
     }
 }

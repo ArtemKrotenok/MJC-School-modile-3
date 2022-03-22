@@ -1,15 +1,12 @@
-package com.epam.esm.service.imp;
+package com.epam.esm.service.impl;
 
 import com.epam.esm.repository.CertificateRepository;
 import com.epam.esm.repository.OrderRepository;
 import com.epam.esm.repository.TagRepository;
 import com.epam.esm.repository.UserRepository;
-import com.epam.esm.repository.model.Certificate;
-import com.epam.esm.repository.model.Order;
-import com.epam.esm.repository.model.Tag;
-import com.epam.esm.repository.model.User;
+import com.epam.esm.repository.model.*;
 import com.epam.esm.service.RandomDataService;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,17 +16,20 @@ import java.io.*;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @Slf4j
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class RandomDataServiceImpl implements RandomDataService {
 
-    private static final int COUNT_USER = 1000;
-    private static final int COUNT_TAG = 10;
+    private static final int COUNT_USER = 100;
+    private static final int COUNT_TAG = 50;
     private static final int CERTIFICATE_MAX_TAGS = 10;
-    private static final int COUNT_CERTIFICATE = 10000;
+    private static final int COUNT_CERTIFICATE = 100;
     private static final int COUNT_ORDER = 1000;
+    private static final int MAX_SOLD_CERTIFICATE_FOR_ORDER = 10;
     public static final String DICTIONARIES_LOGINS = "logins.txt";
     public static final String DICTIONARIES_FIRSTNAMES = "firstnames.txt";
     public static final String DICTIONARIES_SURNAME = "surname.txt";
@@ -43,6 +43,7 @@ public class RandomDataServiceImpl implements RandomDataService {
     private static final int CERTIFICATE_MIN_TAGS = 1;
     public static final String MIN_RANDOM_DATE = "2021-01-01 00:00:00";
     public static final String MAX_RANDOM_DATE = "2022-01-01 00:00:00";
+    private static final int MAX_COUNT_CERTIFICATE_FOR_SOLD = 3;
     private final UserRepository userRepository;
     private final TagRepository tagRepository;
     private final CertificateRepository certificateRepository;
@@ -116,10 +117,26 @@ public class RandomDataServiceImpl implements RandomDataService {
     private Order generateOrder() {
         Order order = new Order();
         order.setUser(getRandomUser());
-        order.setCertificate(getRandomCertificate());
-        order.setOrderDate(order.getCertificate().getCreateDate());
+        order.setSoldCertificates(getRandomSoldCertificates());
+        order.setOrderDate(generateDate());
         order.setOrderPrice(generatePrice());
         return order;
+    }
+
+    private Set<SoldCertificate> getRandomSoldCertificates() {
+        return Stream.generate(this::getRandomSoldCertificate)
+                .limit(getRandomNumber(1, MAX_SOLD_CERTIFICATE_FOR_ORDER))
+                .collect(Collectors.toSet());
+    }
+
+    private SoldCertificate getRandomSoldCertificate() {
+        Certificate certificate = getRandomCertificate();
+        return SoldCertificate.builder()
+                .certificate(certificate)
+                .soldPrice(certificate.getPrice())
+                .discount(new BigDecimal(random.nextInt(100)))
+                .count(getRandomNumber(1, MAX_COUNT_CERTIFICATE_FOR_SOLD))
+                .build();
     }
 
     private Certificate getRandomCertificate() {
@@ -143,18 +160,9 @@ public class RandomDataServiceImpl implements RandomDataService {
         certificate.setName(generateCertificateName());
         certificate.setDescription(generateCertificateDescription());
         certificate.setDuration(generateCertificateDuration());
-        certificate.setCreateDate(generateDate());
-        certificate.setLastUpdateDate(generateDate(certificate.getCreateDate()));
         certificate.setPrice(generatePrice());
         certificate.setTags(getRandomTags());
         return certificate;
-    }
-
-    private Timestamp generateDate(Timestamp minDate) {
-        long offset = minDate.getTime();
-        long end = Timestamp.valueOf(MAX_RANDOM_DATE).getTime();
-        long diff = end - offset + 1;
-        return new Timestamp(offset + (long) (Math.random() * diff));
     }
 
     private Timestamp generateDate() {

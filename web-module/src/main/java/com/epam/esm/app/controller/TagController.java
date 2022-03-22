@@ -2,6 +2,7 @@ package com.epam.esm.app.controller;
 
 import com.epam.esm.app.model.Page;
 import com.epam.esm.app.model.PageModel;
+import com.epam.esm.app.util.LinkUtil;
 import com.epam.esm.app.util.PageUtil;
 import com.epam.esm.service.TagService;
 import com.epam.esm.service.model.TagDTO;
@@ -38,12 +39,11 @@ public class TagController {
      * @return created TagDTO
      */
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<Object> createTag(@RequestBody TagDTO tagDTO) {
         TagDTO newTagDTO = tagService.create(tagDTO);
-        newTagDTO.add(linkTo(methodOn(TagController.class).getTagById(newTagDTO.getId())).withSelfRel());
+        LinkUtil.addLinksInfo(newTagDTO);
         return ResponseEntity
-                .status(HttpStatus.OK)
+                .status(HttpStatus.CREATED)
                 .body(newTagDTO);
     }
 
@@ -59,7 +59,7 @@ public class TagController {
             @RequestParam(name = "page") int page,
             @RequestParam(name = "size") int size) {
         List<TagDTO> tagDTOs = tagService.getAllByPageSorted(page, size);
-        tagDTOs.forEach(tagDTO -> tagDTO.add(linkTo(methodOn(TagController.class).getTagById(tagDTO.getId())).withSelfRel()));
+        tagDTOs.forEach(LinkUtil::addLinksInfo);
         PageModel<List<TagDTO>> response = new PageModel<>(tagDTOs);
         long countTags = tagService.getCount();
         Page pageInfo = PageUtil.getPageInfo(page, size, countTags);
@@ -84,7 +84,7 @@ public class TagController {
     @GetMapping(value = "/{id}")
     public ResponseEntity<Object> getTagById(@PathVariable(name = "id") Long id) {
         TagDTO tagDTO = tagService.findById(id);
-        tagDTO.add(linkTo(methodOn(TagController.class).getTagById(id)).withSelfRel());
+        LinkUtil.addLinksInfo(tagDTO);
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(tagDTO);
@@ -94,13 +94,12 @@ public class TagController {
      * controller for getting super tag
      * *
      *
-     * @param id - id number tag in database
      * @return TagDTO
      */
     @GetMapping(value = "/super")
     public ResponseEntity<Object> getSuperTag() {
         TagDTO tagDTO = tagService.findSuper();
-        tagDTO.add(linkTo(methodOn(TagController.class).getSuperTag()).withSelfRel());
+        LinkUtil.addLinksInfo(tagDTO);
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(tagDTO);
@@ -112,8 +111,10 @@ public class TagController {
      * @param id - id number gift tag in database
      */
     @DeleteMapping(value = "/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteTagById(@PathVariable(name = "id") Long id) {
+    public ResponseEntity<Object> deleteTagById(@PathVariable(name = "id") Long id) {
         tagService.deleteById(id);
+        return ResponseEntity
+                .status(HttpStatus.NO_CONTENT)
+                .body(null);
     }
 }

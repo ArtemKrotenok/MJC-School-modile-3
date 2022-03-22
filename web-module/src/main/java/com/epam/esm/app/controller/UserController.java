@@ -47,7 +47,7 @@ public class UserController {
             @RequestParam(name = "page") int page,
             @RequestParam(name = "size") int size) {
         List<UserDTO> userDTOs = userService.getAllByPageSorted(page, size);
-        userDTOs.forEach(userDTO -> userDTO.add(linkTo(methodOn(UserController.class).getUserById(userDTO.getId())).withSelfRel()));
+        userDTOs.forEach(LinkUtil::addLinksInfo);
         PageModel<List<UserDTO>> response = new PageModel<>(userDTOs);
         long countUsers = userService.getCount();
         Page pageInfo = PageUtil.getPageInfo(page, size, countUsers);
@@ -72,7 +72,7 @@ public class UserController {
     @GetMapping(value = "/{id}")
     public ResponseEntity<Object> getUserById(@PathVariable(name = "id") Long id) {
         UserDTO userDTO = userService.findById(id);
-        userDTO.add(linkTo(methodOn(UserController.class).getUserById(id)).withSelfRel());
+        LinkUtil.addLinksInfo(userDTO);
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(userDTO);
@@ -87,9 +87,9 @@ public class UserController {
 
     @GetMapping(value = "/{id}/orders")
     public ResponseEntity<Object> getAllOrdersForUser(
-            @PathVariable(name = "id") Long id,
             @RequestParam(name = "page") int page,
-            @RequestParam(name = "size") int size
+            @RequestParam(name = "size") int size,
+            @PathVariable(name = "id") Long id
     ) {
         List<OrderDTO> orderDTOs = orderService.getAllOrdersForUserIdByPageSorted(page, size, id);
         orderDTOs.forEach(LinkUtil::addLinksInfo);
@@ -98,10 +98,10 @@ public class UserController {
         Page pageInfo = PageUtil.getPageInfo(page, size, countOrders);
         response.setPage(pageInfo);
         if (page >= 2) {
-            response.getLinks().add(linkTo(methodOn(UserController.class).getAllOrdersForUser(id, page - 1, size)).withRel("previousPage"));
+            response.getLinks().add(linkTo(methodOn(UserController.class).getAllOrdersForUser(page - 1, size, id)).withRel("previousPage"));
         }
         if (page < pageInfo.getTotalPages()) {
-            response.getLinks().add(linkTo(methodOn(UserController.class).getAllOrdersForUser(id, page + 1, size)).withRel("nextPage"));
+            response.getLinks().add(linkTo(methodOn(UserController.class).getAllOrdersForUser(page + 1, size, id)).withRel("nextPage"));
         }
         return ResponseEntity
                 .status(HttpStatus.OK)

@@ -1,19 +1,20 @@
 package com.epam.esm.service.model;
 
-import lombok.*;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.springframework.hateoas.RepresentationModel;
 
-@Getter
-@Setter
+import java.util.List;
+
+@Data
 @Builder
-@ToString
-@AllArgsConstructor
-@NoArgsConstructor
+@EqualsAndHashCode(callSuper = true)
 public class OrderDTO extends RepresentationModel<OrderDTO> {
 
     private Long id;
     private UserDTO user;
-    private CertificateDTO certificate;
+    private List<SoldCertificateDTO> soldCertificates;
     private String orderDate;
     private String orderPrice;
 }

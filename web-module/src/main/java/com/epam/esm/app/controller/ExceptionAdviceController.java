@@ -53,6 +53,6 @@ public class ExceptionAdviceController {
         log.error(exception.toString());
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ResponseDTOUtil.getErrorResponseDTO(ResponseCode.UNKNOWN, exception.getMessage()));
+                .body(ResponseDTOUtil.getErrorResponseDTO(ResponseCode.UNKNOWN, ResponseCode.UNKNOWN.getMessage()));
     }
 }

@@ -4,7 +4,7 @@ import com.epam.esm.repository.OrderRepository;
 import com.epam.esm.repository.TagRepository;
 import com.epam.esm.repository.model.Tag;
 import com.epam.esm.service.exception.CertificateServiceException;
-import com.epam.esm.service.imp.TagServiceImpl;
+import com.epam.esm.service.impl.TagServiceImpl;
 import com.epam.esm.service.model.ResponseCode;
 import com.epam.esm.service.model.TagDTO;
 import com.epam.esm.service.util.TagUtil;

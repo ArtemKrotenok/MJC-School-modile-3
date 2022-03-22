@@ -1,4 +1,4 @@
-package com.epam.esm.service.imp;
+package com.epam.esm.service.impl;
 
 import com.epam.esm.repository.OrderRepository;
 import com.epam.esm.repository.TagRepository;
@@ -12,6 +12,7 @@ import com.epam.esm.service.util.ResponseDTOUtil;
 import com.epam.esm.service.util.TagUtil;
 import com.epam.esm.service.util.ValidationUtil;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,7 @@ import java.util.stream.Collectors;
 
 import static com.epam.esm.service.util.PaginationUtil.getStartPosition;
 
+@Slf4j
 @Service
 @AllArgsConstructor
 public class TagServiceImpl implements TagService {
@@ -42,6 +44,7 @@ public class TagServiceImpl implements TagService {
         }
         Tag tag = tagUtil.convert(tagDTO);
         tagRepository.add(tag);
+        log.info("tag id = " + tag.getId() + " create successfully");
         return tagUtil.convert(tag);
     }
 
@@ -51,10 +54,14 @@ public class TagServiceImpl implements TagService {
         ValidationUtil.validationId(id);
         Tag tag = tagRepository.findById(id);
         if (tag != null) {
+            log.info("tag id = " + tag.getId() + " find successfully");
             return tagUtil.convert(tag);
         }
+        String errorMessage = ResponseCode.NOT_FOUND.getMessage() + " (for id = " + id + ")";
+        log.error(errorMessage);
         throw new CertificateServiceException(ResponseDTOUtil.getErrorResponseDTO(
-                ResponseCode.NOT_FOUND, "for id=" + id), HttpStatus.NOT_FOUND);
+                ResponseCode.NOT_FOUND, errorMessage),
+                HttpStatus.NOT_FOUND);
     }
 
     @Override
@@ -63,15 +70,21 @@ public class TagServiceImpl implements TagService {
         ValidationUtil.validationId(id);
         Tag tag = tagRepository.findById(id);
         if (tag == null) {
+            String errorMessage = ResponseCode.NOT_FOUND.getMessage() + " (for id = " + id + ")";
+            log.error(errorMessage);
             throw new CertificateServiceException(ResponseDTOUtil.getErrorResponseDTO(
-                    ResponseCode.NOT_FOUND, "for id=" + id), HttpStatus.NOT_FOUND);
+                    ResponseCode.NOT_FOUND, errorMessage),
+                    HttpStatus.NOT_FOUND);
         }
         try {
             tagRepository.delete(tag);
             tagRepository.flush();
+            log.info("tag id = " + tag.getId() + " delete successfully");
         } catch (DataIntegrityViolationException e) {
+            String errorMessage = ResponseCode.NOT_DELETE.getMessage() + " (for id = " + id + " entity has dependencies)";
+            log.error(errorMessage);
             throw new CertificateServiceException(ResponseDTOUtil.getErrorResponseDTO(
-                    ResponseCode.NOT_DELETE, "for id=" + id + " entity has dependencies"));
+                    ResponseCode.NOT_DELETE, errorMessage));
         }
     }
 
@@ -86,6 +99,7 @@ public class TagServiceImpl implements TagService {
     public List<TagDTO> getAllByPageSorted(int page, int size) {
         ValidationUtil.validationPageSize(page, size);
         List<Tag> tags = tagRepository.getAllByPageSorted(getStartPosition(page, size), size);
+        log.info(tags.size() + " tags find successfully");
         return convertResults(tags);
     }
 
@@ -97,27 +111,28 @@ public class TagServiceImpl implements TagService {
                     ResponseCode.NOT_FOUND), HttpStatus.NOT_FOUND);
         }
         Map<Tag, Integer> countUseTag = new HashMap<>();
-        for (Order order : orders) {
-            for (Tag tag : order.getCertificate().getTags()) {
-                if (countUseTag.containsKey(tag)) {
-                    int count = countUseTag.get(tag);
-                    count++;
-                    countUseTag.put(tag, count);
-                } else {
-                    countUseTag.put(tag, 1);
-                }
-            }
-        }
-        Map.Entry<Tag, Integer> maxEntry = null;
-        for (Map.Entry<Tag, Integer> entry : countUseTag.entrySet()) {
-            if (maxEntry == null || entry.getValue().compareTo(maxEntry.getValue()) > 0) {
-                maxEntry = entry;
-            }
-        }
-        System.out.println(maxEntry.getValue());
+        orders.forEach(order -> order.getSoldCertificates()
+                .forEach(soldCertificate -> soldCertificate.getCertificate().getTags().forEach(tag -> {
+                    if (countUseTag.containsKey(tag)) {
+                        countUseTag.put(tag, countUseTag.get(tag) + 1);
+                    } else {
+                        countUseTag.put(tag, 1);
+                    }
+                }))
+        );
 
-        return tagUtil.convert(maxEntry.getKey());
+        final Map.Entry<Tag, Integer>[] maxEntry = new Map.Entry[]{countUseTag.entrySet().stream()
+                .findFirst().orElseThrow(() -> new CertificateServiceException(ResponseDTOUtil.getErrorResponseDTO(
+                ResponseCode.NOT_FOUND),
+                HttpStatus.NOT_FOUND))};
 
+        countUseTag.entrySet().stream().parallel().forEach(entry -> {
+            if (entry.getValue().compareTo(maxEntry[0].getValue()) > 0) {
+                maxEntry[0] = entry;
+            }
+        });
+        log.info("super tag id= " + maxEntry[0].getKey().getId() + " find successfully");
+        return tagUtil.convert(maxEntry[0].getKey());
     }
 
     private List<TagDTO> convertResults(List<Tag> tags) {

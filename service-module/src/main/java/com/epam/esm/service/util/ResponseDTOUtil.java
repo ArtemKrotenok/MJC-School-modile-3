@@ -12,9 +12,9 @@ public class ResponseDTOUtil {
                 .build();
     }
 
-    public static ErrorResponseDTO getErrorResponseDTO(ResponseCode responseCode, String description) {
+    public static ErrorResponseDTO getErrorResponseDTO(ResponseCode responseCode, String message) {
         return ErrorResponseDTO.builder()
-                .errorMessage(responseCode.getMessage() + " (" + description + ")")
+                .errorMessage(message)
                 .errorCode(responseCode.getCode())
                 .build();
     }

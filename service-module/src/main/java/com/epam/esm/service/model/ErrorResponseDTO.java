@@ -1,12 +1,10 @@
 package com.epam.esm.service.model;
 
-import lombok.*;
+import lombok.Builder;
+import lombok.Data;
 
-@Getter
-@Setter
+@Data
 @Builder
-@AllArgsConstructor
-@NoArgsConstructor
 public class ErrorResponseDTO {
 
     private String errorMessage;
